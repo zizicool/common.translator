@@ -46,10 +46,5 @@
 			<version>1.2.11</version>
 		</dependency>
 		
-		<dependency>
-			<groupId>com.zhx</groupId>
-			<artifactId>common</artifactId>
-			<version>${zhx.common.version}</version>
-		</dependency>
 	</dependencies>
 </project>
