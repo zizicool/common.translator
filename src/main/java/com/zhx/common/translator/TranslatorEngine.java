@@ -39,6 +39,8 @@ import com.zhx.common.translator.annotation.Trans;
 public class TranslatorEngine {
 	private static final Logger log=LoggerFactory.getLogger(TranslatorEngine.class);
 	private static final ConcurrentHashMap<String,Map<String,Field>> TRANS_CLASS_META_CACHE=new ConcurrentHashMap<>();
+	private static final ConcurrentHashMap<String,Class<?>> CLAZZ_CACHE=new ConcurrentHashMap<String, Class<?>>();
+	
 
 	@Autowired
 	private List<ITranslator> translators=new ArrayList<>();
@@ -104,14 +106,14 @@ public class TranslatorEngine {
 				GValue tmp=field.getAnnotation(GValue.class);
 				String key=tmp.value();
 				gvMap.computeIfAbsent(StringUtils.hasText(key)?key: field.getName(), tk->{
-					return this.obtainValue(data, field);
+					return obtainValue(data, field);
 				});
 			}
 		}
 	}
 
 	private void translateDataForPojoField(Object data, Field field, Map<String, Object> gvMap) {
-		Object fieldData=this.obtainValue(data, field);
+		Object fieldData=obtainValue(data, field);
 		this.translateData(fieldData,null,gvMap);
 	}
 	
@@ -122,7 +124,7 @@ public class TranslatorEngine {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void translateDataForCollectionField(Object data,Field field, Map<String, Object> gvMap ) {
 		HashMap<String,Object> cacheValue=new HashMap<>();
-		Collection<Object> subDataList=(Collection) this.obtainValue(data, field);
+		Collection<Object> subDataList=(Collection) obtainValue(data, field);
 		if(subDataList==null||subDataList.isEmpty()) {
 			return;
 		}
@@ -154,13 +156,13 @@ public class TranslatorEngine {
 		}
 		Trans transMeta=field.getAnnotation(Trans.class);
 		//原始值存在时不翻译
-		if(this.obtainValue(data, field)!=null
+		if(obtainValue(data, field)!=null
 				||transMeta.dependentField()==null
 				||transMeta.dependentField().trim().equals("")) {
 			return;
 		}
 		Field mainField=waitingTransList.get(transMeta.dependentField().trim());
-		Object mainValue=this.obtainValue(data, mainField);
+		Object mainValue=obtainValue(data, mainField);
 		if(mainValue==null
 				||(mainValue instanceof List && ((List<?>) mainValue).isEmpty())
 				||(mainValue instanceof Object[] && ((Object[]) mainValue).length==0)
@@ -168,14 +170,15 @@ public class TranslatorEngine {
 			return ;
 		}
 		List<Object> dependentValues=this.obtainDependentOtherValue(data,transMeta,waitingTransList,gvMap);
+		KeyObj ko=obtainKeyObj(data, transMeta, waitingTransList);
 		//如果存在依赖值则不取缓存
 		Object aimValue=null;
 		if((dependentValues!=null&&!dependentValues.isEmpty()) 
 				|| this.isArray(mainValue)) {
-			aimValue=this.transValueWithTranslator(transMeta,mainValue,dependentValues);
+			aimValue=this.transValueWithTranslator(ko,transMeta,mainValue,dependentValues);
 		}else {
 			String cacheKey=this.buildCacheKey(transMeta,mainValue);
-			aimValue=cacheValue.computeIfAbsent(cacheKey, k->this.transValueWithTranslator(transMeta,mainValue,dependentValues));
+			aimValue=cacheValue.computeIfAbsent(cacheKey, k->this.transValueWithTranslator(ko,transMeta,mainValue,dependentValues));
 		}
 		if(aimValue==null) {
 			aimValue=transMeta.defaultValue();
@@ -204,7 +207,7 @@ public class TranslatorEngine {
 	 * @param dependentValues
 	 * @return
 	 */
-	private Object transValueWithTranslator(final Trans transMeta, Object mainValue, List<Object> dependentValues) {
+	private Object transValueWithTranslator(KeyObj ko,final Trans transMeta, Object mainValue, List<Object> dependentValues) {
 		if(this.translators==null) {
 			return null;
 		}
@@ -216,7 +219,7 @@ public class TranslatorEngine {
 			Iterable<?> it=(Iterable<?>)mainValue;
 			StringJoiner sj=new StringJoiner(transMeta.aimSpacer());
 			for (Object item : it) {
-				Object tmp=this._doTransValueWithTranslator(transMeta, item, dependentValues);
+				Object tmp=this._doTransValueWithTranslator(ko,transMeta, item, dependentValues);
 				sj.add(tmp==null?null:tmp.toString());
 			}
 			return sj.toString();
@@ -224,12 +227,12 @@ public class TranslatorEngine {
 			Object[] tmpArray=(Object[])mainValue;
 			StringJoiner sj=new StringJoiner(transMeta.aimSpacer());
 			for (Object item : tmpArray) {
-				Object tmp=this._doTransValueWithTranslator(transMeta, item, dependentValues);
+				Object tmp=this._doTransValueWithTranslator(ko,transMeta, item, dependentValues);
 				sj.add(tmp==null?null:tmp.toString());
 			}
 			return sj.toString();
 		}else {
-			return this._doTransValueWithTranslator(transMeta, mainValue, dependentValues);
+			return this._doTransValueWithTranslator(ko,transMeta, mainValue, dependentValues);
 		}
 	}
 	
@@ -240,12 +243,12 @@ public class TranslatorEngine {
 	 * @param dependentValues
 	 * @return
 	 */
-	private Object _doTransValueWithTranslator(final Trans transMeta, Object mainValue, List<Object> dependentValues) {
+	private Object _doTransValueWithTranslator(KeyObj ko,final Trans transMeta, Object mainValue, List<Object> dependentValues) {
 		Optional<ITranslator> translator=this.translators.stream().filter(item->{
-			return item.isSupport(transMeta);
+			return item.isSupport(ko,transMeta);
 		}).findFirst();
 		return translator.map(t->{
-			return t.trans(transMeta, mainValue, dependentValues);
+			return t.trans(ko,transMeta, mainValue, dependentValues);
 		}).orElse(transMeta.keepOriginal()?mainValue:transMeta.defaultValue());
 	}
 	
@@ -268,7 +271,7 @@ public class TranslatorEngine {
 		for (String fname : transMeta.dependentOtherField()) {
 			if(fname!=null&&!fname.trim().equals("")) {
 				fname=fname.trim();
-				Object tmp=this.obtainValue(data, waitingTransList.get(fname));
+				Object tmp=obtainValue(data, waitingTransList.get(fname));
 				if(tmp==null) {
 					tmp=gvMap.get(fname);
 				}
@@ -285,7 +288,7 @@ public class TranslatorEngine {
 	 * @param mainField
 	 * @return
 	 */
-	private Object obtainValue(Object data,Field field) {
+	private static Object obtainValue(Object data,Field field) {
 		if(field==null||data==null) {
 			return null;
 		}
@@ -362,6 +365,10 @@ public class TranslatorEngine {
 							}
 						}
 					}
+					String keyField=obtainKeyFieldName(tmp);
+					if(keyField!=null) {
+						dependNames.add(keyField);
+					}
 					res.put(field.getName(), field);
 				}else if(field.isAnnotationPresent(GValue.class)) {
 					res.put(field.getName(), field);
@@ -378,6 +385,71 @@ public class TranslatorEngine {
 				}
 			}
 			return  Collections.unmodifiableMap(res);
+		});
+	}
+	
+	
+	
+	private static final String FIELD_KEY_PREFIX="DEP:";
+	
+	/**
+	 * 获取key字段模式的字段名称
+	 * @return
+	 */
+	private static  String obtainKeyFieldName(Trans tmp) {
+		String tmpKey=tmp==null?null:tmp.key();
+		tmpKey=tmpKey==null?"":tmpKey.trim();
+		if(tmpKey.startsWith(FIELD_KEY_PREFIX)&&tmpKey.length()>FIELD_KEY_PREFIX.length()) {
+			return tmpKey.substring(FIELD_KEY_PREFIX.length());
+		}
+		return null;
+	}
+	
+	
+	
+	private static KeyObj obtainKeyObj(Object data,Trans tmp,Map<String, Field> waitingTransList) {
+		if(tmp.key()==null||"".equals(tmp.key().trim())) {
+			return KeyObj.by(tmp.dicType());
+		}else {
+			String keyField=obtainKeyFieldName(tmp);
+			Object keyValue=keyField==null?null:obtainValue(data, waitingTransList.get(keyField));
+			return obtainKeyObjByValue(keyValue,tmp.key().trim());
+		}
+	}
+	
+	private static KeyObj obtainKeyObjByValue(Object keyValue,String originalKey) {
+		if(keyValue==null) {
+			return KeyObj.by(originalKey);
+		}else {
+			String tmp=keyValue.toString();
+			if(tmp.startsWith("C:")) {
+				String className=tmp.substring(2);
+				Class<?> tmpClass=obtainClass(className);
+				if(tmpClass==null) {
+					return KeyObj.by(tmp);
+				}else {
+					return KeyObj.by(tmpClass);
+				}
+				
+			}else if (tmp.startsWith("K:")) {
+				return KeyObj.by(tmp.substring(2));
+			}else {
+				return KeyObj.by(tmp);
+			}
+		}
+	}
+
+	private static Class<?> obtainClass(String cname) {
+		if(cname==null) {
+			return null;
+		}
+		return CLAZZ_CACHE.computeIfAbsent(cname, k->{
+			try {
+				return Class.forName(cname);
+			} catch (ClassNotFoundException e) {
+				log.error("类未找到:{}",cname,e);
+				return null;
+			}
 		});
 	}
 	

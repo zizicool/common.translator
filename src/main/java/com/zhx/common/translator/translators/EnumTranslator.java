@@ -9,6 +9,7 @@ import com.zhx.common.enums.IGradableEnum;
 import com.zhx.common.enums.IValueLabelEnum;
 import com.zhx.common.translator.EnumUtils;
 import com.zhx.common.translator.ITranslator;
+import com.zhx.common.translator.KeyObj;
 import com.zhx.common.translator.annotation.Trans;
 /**
  * 实现了IValueLabelEnum接口的枚举翻译器
@@ -25,8 +26,9 @@ public class EnumTranslator implements ITranslator {
 	}
 	
 	@Override
-	public boolean isSupport(Trans transMeta) {
-		return IValueLabelEnum.class.isAssignableFrom(transMeta.dicType());
+	public boolean isSupport(KeyObj ko,Trans transMeta) {
+		Class<?> type=ko.obtainValueAsClass();
+		return type!=null && IValueLabelEnum.class.isAssignableFrom(type);
 	}
 
 	@Override
@@ -35,13 +37,14 @@ public class EnumTranslator implements ITranslator {
 	}
 
 	@Override
-	public Object trans(Trans transMeta, Object dependentValue, List<?> dependentOtherValues) {
+	public Object trans(KeyObj ko,Trans transMeta, Object dependentValue, List<?> dependentOtherValues) {
 		Object pv=CollectionUtils.isEmpty(dependentOtherValues)?null:dependentOtherValues.get(0);
-		if(IGradableEnum.class.isAssignableFrom(transMeta.dicType())&&pv!=null) {
-			return EnumUtils.obtainEnumByValue(transMeta.dicType().getSimpleName(), pv.toString(), dependentValue)
+		Class<?> dicType=ko.obtainValueAsClass();
+		if(IGradableEnum.class.isAssignableFrom(dicType)&&pv!=null) {
+			return EnumUtils.obtainEnumByValue(dicType.getSimpleName(), pv.toString(), dependentValue)
 					.map(IValueLabelEnum::getLabel).orElse(null);
-		}else if(transMeta.dicType().getEnumConstants()!=null){
-			for (Object tmp : transMeta.dicType().getEnumConstants()) {
+		}else if(dicType.getEnumConstants()!=null){
+			for (Object tmp : dicType.getEnumConstants()) {
 				IValueLabelEnum<Object> tmpEnumItem=(IValueLabelEnum)tmp;
 				if (dependentValue!=null && (tmpEnumItem.isMyStrValue(dependentValue.toString())||tmpEnumItem.isMyValue(dependentValue))) {
 					return tmpEnumItem.getLabel();

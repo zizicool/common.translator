@@ -19,6 +19,7 @@ public class TestMain2 extends AbstractTest {
 		o.setProductCata(Level1Enums.JIA_DIAN.getValue());
 		o.setProducts(new ArrayList<>());
 		Product p=new Product();
+		p.setTypeKeyType("C:com.zhx.common.translator.test.enums.level.Level2Enums");
 		p.setPrice("111");
 		p.setType(JiaDianEnums.ICEBOX.getValue());
 		o.getProducts().add(p);

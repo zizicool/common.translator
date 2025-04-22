@@ -17,7 +17,7 @@ public interface ITranslator {
 	 * @param transMeta
 	 * @return
 	 */
-	boolean isSupport(Trans transMeta);
+	boolean isSupport(KeyObj ko, Trans transMeta);
 	
 	/**
 	 * 返回翻译器的执行顺序。注: 当前设计为只获取第一个支持的翻译器进行翻译，
@@ -32,7 +32,7 @@ public interface ITranslator {
 	 * @param dependentOtherValues 依赖的其它字段值
 	 * @return
 	 */
-	Object trans(Trans transMeta,Object dependentValue, List<?> dependentOtherValues);
+	Object trans(KeyObj ko,Trans transMeta,Object dependentValue, List<?> dependentOtherValues);
 	
 
 }
