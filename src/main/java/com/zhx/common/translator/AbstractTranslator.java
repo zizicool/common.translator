@@ -28,8 +28,8 @@ public abstract class AbstractTranslator implements ITranslator {
 	 * @param dependentOtherValues
 	 * @return
 	 */
-	protected  String buildKey(Trans transMeta, List<?> dependentOtherValues) {
-		String tmpKey=transMeta.key();
+	protected  String buildKey(KeyObj ko,Trans transMeta, List<?> dependentOtherValues) {
+		String tmpKey=ko.obtainValueAsString();
 		if(tmpKey==null||!transMeta.ifMapKey()) {
 			return tmpKey;
 		}
