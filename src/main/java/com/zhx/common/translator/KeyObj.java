@@ -46,6 +46,14 @@ public class KeyObj {
 		}
 		return TYPE_CLASS==this.type?(Class<?>) this.value:NullType.class;
 	}
+	
+	
+	public String obtainValueAsString() {
+		if(this.value==null) {
+			return null ;
+		}
+		return TYPE_STRING==this.type?this.value.toString():null;
+	}
 
 	public int getType() {
 		return type;
