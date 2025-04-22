@@ -28,7 +28,7 @@ public class EnumTranslator implements ITranslator {
 	@Override
 	public boolean isSupport(KeyObj ko,Trans transMeta) {
 		Class<?> type=ko.obtainValueAsClass();
-		return type!=null && IValueLabelEnum.class.isAssignableFrom(type);
+		return IValueLabelEnum.class.isAssignableFrom(type);
 	}
 
 	@Override

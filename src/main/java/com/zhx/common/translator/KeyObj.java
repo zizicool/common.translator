@@ -1,5 +1,7 @@
 package com.zhx.common.translator;
 
+import javax.lang.model.type.NullType;
+
 /**
  * key对象
  * @author zhx 2025年4月21日
@@ -39,7 +41,10 @@ public class KeyObj {
 	}
 	
 	public Class<?> obtainValueAsClass(){
-		return TYPE_CLASS==this.type?(Class<?>) this.value:null;
+		if(this.value==null) {
+			return NullType.class ;
+		}
+		return TYPE_CLASS==this.type?(Class<?>) this.value:NullType.class;
 	}
 
 	public int getType() {
