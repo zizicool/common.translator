@@ -13,6 +13,15 @@ public class Product {
 	private String typeDesc222;
 	
 	
+	private String colorCode;
+	private String colorCodeType;
+	private String colorCodeDefi;
+	
+	@Trans(key = "DEP:colorCodeDefi",dependentField ="colorCode",dependentOtherField = {"colorCodeType"})
+	private String colorCodeDesc;
+	
+	
+	
 	private String typeKeyType;
 	
 	private String price;
@@ -50,6 +59,33 @@ public class Product {
 	public void setPrice(String price) {
 		this.price = price;
 	}
+	public String getColorCode() {
+		return colorCode;
+	}
+	public void setColorCode(String colorCode) {
+		this.colorCode = colorCode;
+	}
+	public String getColorCodeType() {
+		return colorCodeType;
+	}
+	public void setColorCodeType(String colorCodeType) {
+		this.colorCodeType = colorCodeType;
+	}
+	public String getColorCodeDefi() {
+		return colorCodeDefi;
+	}
+	public void setColorCodeDefi(String colorCodeDefi) {
+		this.colorCodeDefi = colorCodeDefi;
+	}
+	public String getColorCodeDesc() {
+		return colorCodeDesc;
+	}
+	public void setColorCodeDesc(String colorCodeDesc) {
+		this.colorCodeDesc = colorCodeDesc;
+	}
+	
+	
+	
 	
 	
 	

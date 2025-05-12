@@ -32,7 +32,7 @@ public @interface Trans {
 	 *  	color1=[{"code":'01',"label":"红色"},{"code":'02',"label":"绿色"}]
 	 *  	color2=[{"code":'01',"label":"褐色"},{"code":'02',"label":"黑色"}]
 	 *  如果翻译的的属性 color='01' 时, 需要根据另一个字段type(可用值为: 01,02)的值决定使用那个枚举.
-	 *  按以下方式配置即可:  key="{"01":"color1",""02":"color2"}" dependentOtherField="type"
+	 *  按以下方式配置即可:  key="{"01":"color1","02":"color2"}" dependentOtherField="type"
 	 * 	
 	 * @return
 	 */

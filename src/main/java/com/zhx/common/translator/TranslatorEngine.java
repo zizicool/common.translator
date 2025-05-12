@@ -430,9 +430,10 @@ public class TranslatorEngine {
 				}else {
 					return KeyObj.by(tmpClass);
 				}
-				
 			}else if (tmp.startsWith("K:")) {
 				return KeyObj.by(tmp.substring(2));
+			}else if(tmp.startsWith("M:")) {
+				return KeyObj.byMapString(tmp.substring(2));
 			}else {
 				return KeyObj.by(tmp);
 			}

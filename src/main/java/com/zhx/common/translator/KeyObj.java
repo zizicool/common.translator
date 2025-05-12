@@ -17,6 +17,11 @@ public class KeyObj {
 	 */
 	private static final int TYPE_STRING=2;
 	
+	/**
+	 * MAP模式的字典
+	 */
+	private static final int TYPE_MAP=3;
+	
 	
 	private int type;
 	
@@ -32,13 +37,21 @@ public class KeyObj {
 		return res;
 	}
 	
-	
 	public static KeyObj by(Class<?> value) {
 		KeyObj res=new KeyObj();
 		res.setType(TYPE_CLASS);
 		res.setValue(value);
 		return res;
 	}
+	
+	public static KeyObj byMapString(String value) {
+		KeyObj res=new KeyObj();
+		res.setType(TYPE_MAP);
+		res.setValue(value);
+		return res;
+	}
+	
+	
 	
 	public Class<?> obtainValueAsClass(){
 		if(this.value==null) {
@@ -52,8 +65,23 @@ public class KeyObj {
 		if(this.value==null) {
 			return null ;
 		}
-		return TYPE_STRING==this.type?this.value.toString():null;
+		return (TYPE_STRING==this.type|| TYPE_MAP==this.type)?this.value.toString():null;
 	}
+	
+	
+	
+	public boolean isMapKey() {
+		return TYPE_MAP==this.type;
+	}
+	
+	public boolean isClassKey() {
+		return TYPE_CLASS==this.type;
+	}
+	
+	public boolean isStringKey() {
+		return TYPE_STRING==this.type;
+	}
+	
 
 	public int getType() {
 		return type;

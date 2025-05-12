@@ -30,7 +30,7 @@ public abstract class AbstractTranslator implements ITranslator {
 	 */
 	protected  String buildKey(KeyObj ko,Trans transMeta, List<?> dependentOtherValues) {
 		String tmpKey=ko.obtainValueAsString();
-		if(tmpKey==null||!transMeta.ifMapKey()) {
+		if(tmpKey==null|| !(ko.isMapKey()|| transMeta.ifMapKey())) {
 			return tmpKey;
 		}
 		if(CollectionUtils.isEmpty(dependentOtherValues)||dependentOtherValues.get(0)==null) {
